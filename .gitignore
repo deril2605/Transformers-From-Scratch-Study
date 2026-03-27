@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Local secrets / env
+.env
+.env.*
+!.env.example
+
+# Local training artifacts
+outputs/
+data/
+cnn_dailymail_train.parquet
+cnn_dailymail_test.parquet
+fact_qa_train.parquet
+fact_qa_test.parquet
+pretrain_final.pth
+sft_final.pth
+model_checkpoint_*.pt
+sft_model_checkpoint_*.pt
+loss_curve.png
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
