@@ -22,6 +22,7 @@ aca_pretraining/
   data_utils.py
   modeling.py
   pretraining.py
+  download_latest_blob_run.ipynb
   requirements.txt
   Dockerfile
   .dockerignore
@@ -53,6 +54,14 @@ Inside that run directory you will find:
 - `checkpoints/model_checkpoint_<step>.pt`
 - `model/pretrain_final.pth`
 - `metrics/metrics.json`
+
+The most useful first file to inspect after a run is `logs/train.log`. It contains:
+
+- startup config
+- CUDA / GPU detection details
+- evaluation reports
+- checkpoint saves
+- Blob upload activity
 
 ## Configuration
 
@@ -122,6 +131,39 @@ runs/<timestamp>/metrics/metrics.json
 
 If upload fails, the local files remain on disk.
 
+## Downloading the latest run from Blob
+
+After an ACA run finishes, you can download the newest uploaded run back to your machine with:
+
+- [download_latest_blob_run.ipynb](C:/Users/deril/OneDrive/Desktop/Deril/Development/Transformers-From-Scratch/aca_pretraining/download_latest_blob_run.ipynb)
+
+The notebook:
+
+- loads `AZURE_STORAGE_CONNECTION_STRING` and `AZURE_BLOB_CONTAINER` from `.env`
+- lists blobs under `runs/`
+- detects the latest run timestamp automatically
+- downloads the full run into `aca_pretraining/model_run/`
+
+The downloaded folder keeps the same structure as Blob:
+
+- `model_run/checkpoints/`
+- `model_run/logs/`
+- `model_run/metrics/`
+- `model_run/model/`
+
+This is the easiest way to pull down the latest ACA artifacts for local inspection, plotting, or later inference work.
+
+Start with:
+
+- `model_run/logs/train.log`
+
+That log file is the best single place to verify ACA runtime details such as:
+
+- whether the job saw CUDA
+- which GPU Azure attached
+- training progress and eval loss
+- checkpoint and final artifact saves
+
 ## ACA GPU deployment
 
 This project has been validated end-to-end on Azure Container Apps GPU Jobs with:
@@ -137,6 +179,18 @@ The recommended deployment path for this repo is:
 - use [create-aca-gpu-job.ipynb](create-aca-gpu-job.ipynb) to create or update the ACA environment and job
 - run the job manually from the notebook or Azure Portal
 - validate GPU attachment from startup logs
+
+### Validated ACA setup
+
+The working Azure setup for this project uses:
+
+- ACA Job image: `docker.io/deril2605/gpt-pretraining-smoke:latest`
+- workload profile: `Consumption-GPU-NC24-A100`
+- CPU / memory: `24 vCPU`, `220Gi`
+- runtime GPU: `NVIDIA A100 80GB PCIe`
+- artifact persistence: Azure Blob Storage uploads at the end of the run
+
+This was validated with a real ACA execution, not just local Docker testing.
 
 Important ACA details for this project:
 
@@ -191,6 +245,24 @@ Recommended defaults for the validated setup:
 - `ACA_JOB_CPU=24`
 - `ACA_JOB_MEMORY=220Gi`
 
+### ACA screenshots
+
+GPU workload profile selection:
+
+![ACA GPU profile](images/aca-gpu.png)
+
+Job configuration / run view:
+
+![ACA job run](images/aca-run-job.png)
+
+Completed execution in the Portal:
+
+![ACA finished execution](images/aca-finished-exec.png)
+
+Execution logs in the Portal:
+
+![ACA finished execution logs](images/aca-finished-exec-logs.png)
+
 Microsoft docs:
 
 - https://learn.microsoft.com/en-us/azure/container-apps/jobs
@@ -215,8 +287,8 @@ Using the rough A100 hourly estimate discussed during setup:
 
 Using your conversion assumption of `1 USD = 94 INR`:
 
-- approximately `₹752 to ₹1,128` per full run
-- simple planning number: about `₹950 per run`
+- approximately `INR 752 to INR 1,128` per full run
+- simple planning number: about `INR 950 per run`
 
 Treat this as a ballpark estimate only. Actual Azure charges can differ based on:
 
@@ -225,16 +297,6 @@ Treat this as a ballpark estimate only. Actual Azure charges can differ based on
 - Blob storage usage
 - runtime variation between runs
 - any platform-side billing overhead
-
-### Screenshots
-
-ACA Job run view:
-
-![ACA job run](images/aca-run-job.png)
-
-GPU workload profile selection:
-
-![ACA GPU profile](images/aca-gpu.png)
 
 ## Docker build
 
