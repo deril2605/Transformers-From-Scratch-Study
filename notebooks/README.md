@@ -9,7 +9,7 @@
 This article will walk through building a simple GPT style model from scratch using pytorch [1,2]. The goal of this article is to train a basic large language model from start to finish in one notebook. We will train an LLM that is small enough to fit in a single GPU during training and inference, so the notebook can be run in popular cloud GPU services (Google Colab, Kaggle, Paperspace, etc...). The computation graph of the model that we will build in this article is as follows:
 
 <div style="max-width:500px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_00_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_00_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 This architecture resembles the original [GPT](https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf) model, and is quite similar to [GPT2](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) and [GPT3](https://arxiv.org/pdf/2005.14165), with the main difference being that it is smaller (less decoder blocks and smaller embedding sizes) [1,3,4]. We will zoom into each step of this diagram throughout this article to discuss the math, code, and intuition behind them. 
@@ -24,7 +24,7 @@ The first stage in building a GPT model is pretraining. Pretraining builds the "
 The goal of pretraining is simple: **to have a model that can reliably predict the next token given the previous k tokens in a sequence**. The final result of pretraining is a deep learning model that takes in $k$ tokens and produces a discrete probability distribution of what the $k+1$ token should be. We want this distribution to show a high value for the correct token and low values for the incorrect ones.
 
 <div style="max-width:600px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_01_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_01_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 
@@ -34,14 +34,14 @@ To achieve this, we start off with a large dataset of raw text. This text can be
 When dealing with LLMs we use the word "token" to describe the smallest "unit" of text that an LLM can analyze [5]. Tokens can generally be thought of as words conceptually. When analyzing a sequence of text, an LLM first has to convert the text to tokens. This is similar to a dictionary lookup, each word/token will have an integer "index" in the lookup. This index is what will actually be fed into the network to be analyzed.
 
 <div style="max-width:600px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_01_image-3.png" alt="image-3.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_01_image-3.png" alt="image-3.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 #### Pretraining Data Format
 Each example of the pretraining dataset is a chunk of tokens. The same chunk of tokens is used for the input and output, but the output is shifted 1 token into the "future". The reason for this has to do with the parallel processing capabilities of the transformer, which we will go into depth further in the transformer section. The following visual helps show what the training data looks like for the pretraining model.    
 
 <div style="max-width:600px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_01_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_01_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 Because the model uses transformers and parallel processing, a single example like the one above is actually in a sense 6 different examples. The model is learning the following predictive patterns:   
@@ -91,7 +91,7 @@ First, we can build a "config" object that will store our parameters for the net
 ### 1.3.2 Token Embedding Layer
 
 <div style="max-width:400px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_11_image-5.png" alt="image-5.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_11_image-5.png" alt="image-5.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 Our first layer of the network is going to be a **token embedding layer**. This layer is a little bit different than traditional neural network layers. It is essentially a lookup table that returns an "embedding vector" for a given integer index. **The goal of this layer is to convert tokens to vectors**. These vectors are tuned as the network is trained so that their position in space relative to the other tokens reflects their statistical relationships with each other.    
@@ -101,14 +101,14 @@ The embedding layer converts a discrete token (integer) into a semantic represen
 These are vectors that start off as random, but slowly assume values within embedding space that reflect the semantic meaning of the token. This process happens during training.
 
 <div style="max-width:800px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_11_image-3.png" alt="image-3.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_11_image-3.png" alt="image-3.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 
 For our dummy dataset, the input to this layer will be a matrix of size $2x4$, batch x token indices. The output will be $2x4x6$, batch x tokens x embedding dimensions. This transformation can be visuzlized as follows:
 
 <div style="max-width:600px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_11_image-4.png" alt="image-4.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_11_image-4.png" alt="image-4.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 In this example, we are using an embedding dimension of 6, so each original token is mapped to a vector of length 6. As of right now, these vectors don't have any actual meaning, they are randomly initialized. However, during the training process, these entries will be slowly nudged via backpropagation and over time they will start to assume meaning for their respective tokens.
@@ -116,7 +116,7 @@ In this example, we are using an embedding dimension of 6, so each original toke
 ### 1.3.3 Positional Encoding Layer
 
 <div style="max-width:400px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_14_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_14_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 After embedding the tokens into embedding vectors, we will add a positional encoding to the vectors. Why do we need a positional encoding? Consider the following sentence:   
@@ -135,7 +135,7 @@ Where $POS$ is the position of the token in the sequence, i is the index of the 
 Once we have the positional encoding, we add that using element wise addition to the embedding vectors. Since we are using pytorch, the addition will "broadcast" across the first dimension. This means that the 4x6 positional encoding matrix will be added to each batch example in parallel.   
 
 <div style="max-width:800px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_16_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_16_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 #### What is the Intuition Behind Positional Encodings?
@@ -154,7 +154,7 @@ The positional encoding makes the vectors for dog and owner different in the two
 The below image shows an example of a positional encoding matrix. It looks interesting but what exactly are we looking at? Why does this help the model encode the position of each embedding vector. Remember, each row in our embedding vector represents a word/token. We will be adding this matrix to the embedding matrix to encode positions. One thing to note about this matrix is that each row is unique. There is also a smooth transition between each row. If you take rows 27 and 28 from this matrix, they are going to have very similar patterns. However if you take rows 1 and 120 from this matrix, they are going to differ much more. This smoothness is also an important feature that helps the model understand position [10].
 
 <div style="max-width:500px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_18_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_18_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 There is nothing inherently special about the formula above, there are other formulas for positional encoding. The key thing to note is that there needs to be some matrix that we can add to our embedding matrix that encodes position. This formula has certain properties that are biased towards making it easy for the model to do that.
@@ -162,7 +162,7 @@ There is nothing inherently special about the formula above, there are other for
 ### 1.3.4 Masked Multiheaded Self Attention
 
 <div style="max-width:400px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_19_image-9.png" alt="image-9.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_19_image-9.png" alt="image-9.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 After positional encoding, we get to the core of the LLM - the (decoder only) transformer. The first step of the transformer is masked multiheaded self attention. We can break down the internals of the transformer into three parts: self attention, then masking, then the multiple heads.    
@@ -180,7 +180,7 @@ Q, K, and V are query, key, and value matrices. They are set initially through m
 The projection operation to generate Q,K, and V are shown below using the dimensions for our dummy dataset/network.
 
 <div style="max-width:700px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_19_image-3.png" alt="image-3.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_19_image-3.png" alt="image-3.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 Q, K, and V are all matrices that are of shape *num tokens x embedding size*. Each token has a query vector in "query space". Each token also has a key vector in "key space". When we do the $QK^T$ operation, we are calculating how well each token query matches each key. This could be thought of as sort of a "fuzzy lookup" using vector dot products. If the query and key have a high dot product, that means the vectors are pointing in a direction near each other. This also means those two tokens are important to take into account together.    
@@ -202,7 +202,7 @@ We know that the $Q$, $K$, $V$ matrices are created by a matrix operation to the
 The $Q$ matrix can be thought of as n rows of queries or questions, where n is the number of tokens in the input. When thinking about the $Q$ matrix, think of it as n vectors instead of a single matrix. Where each vector is a query or question about the corresponding word that could be answered by some combinations of the other words. Remember, we are "reframing" the give word as some combination of the other words. For example it could look like the following:   
 
 <div style="max-width:700px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_19_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_19_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 In this case each token has a corresponding question. These questions or queries are going to be questions that can be answered by the surrounding tokens. So how are these questions created? $W_q$ is responsible for creating the right questions for each token (with position). $W_q$ maps a token to a relevant query about that token. These queries become relevant through the process of training via backpropagation.    
@@ -212,7 +212,7 @@ In this case each token has a corresponding question. These questions or queries
 We can think of the $K$ matrix as n row vectors of keys, where n is the number of tokens in the input. What do we mean by "keys". It is easiest to think of keys as facts that can help answer queries. Above in the query section we asked questions like "what noun do I describe?". A key that might closely match this query would be "I am a noun that can be described". Similar to the queries, $W_k$ creates these keys by learning the right mapping from token to corresponding key. These keys are good matches for the queries becuase of the $QK^T$ operation that is performed in training. 
 
 <div style="max-width:700px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_19_image-5.png" alt="image-5.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_19_image-5.png" alt="image-5.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 Overall, each key can be conceived of as a fact about that token that could help answer a queries that the other tokens might have. 
@@ -227,7 +227,7 @@ Basically, what we are doing is redescribing the original token query/question a
 When doing the $QK^T$ operation, we are reframing the query row vectors to a combination of the keys. Remember each query has to do with how that token relates to the other tokens, so the answers can be formed as some combination of the other tokens. 
 
 <div style="max-width:700px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_19_image-4.png" alt="image-4.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_19_image-4.png" alt="image-4.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 ##### $\frac{QK^T}{\sqrt{d_k}}$ Operation Intuition:
@@ -246,7 +246,7 @@ We can still think of this as each token is represented as a "reframed" query ve
 The $V$ matrix is a bit hard to conceive of, but can be thought of as a column matrix, where each column is a learned feature, and each element of those vectors is the value of that feature for the token in that row. They are "feature" vectors, that contain information about specific learned features for each token. When we do the final operation, these feature vectors will be weighted, meaning that the values of these features for certain tokens on should be focused on more than other tokens. The $V$ matrix is the actual content or output of attention. This content will be  adjusted by the weights from the $softmax(\frac{QK^T}{\sqrt{d_k}})$ operation
 
 <div style="max-width:300px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_19_image-8.png" alt="image-8.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_19_image-8.png" alt="image-8.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 
@@ -258,14 +258,14 @@ Now for the final operation of attention, multiplying by the $V$ matrix. We can 
 $$softmax(\frac{QK^T}{\sqrt{d_k}})V$$
 
 <div style="max-width:900px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_19_image-7.png" alt="image-7.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_19_image-7.png" alt="image-7.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 When putting this all together (using the original dimensions of our "test" config object as we are in the code), we can see what all the matrix operations and dimensions through the self attention operation are.     
    
 
 <div style="max-width:1000px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_19_image-6.png" alt="image-6.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_19_image-6.png" alt="image-6.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 #### Self Attention: Code
@@ -277,7 +277,7 @@ Self attention can be written as a self contained pytorch module as shown below.
 Now that we have implemented self attention, we can move on to causal self attention. During training, we are trying to predict the next token at each time step in parallel in the transformer. However, we will be cheating if we allow attention to see future tokens during the training process. It will just predict the future tokens by looking at them. For this reason we need to mask the matrices so that future tokens are hidden from self attention layers. We perform this masking after the $QK^T$ operation [11].
 
 <div style="max-width:400px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_21_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_21_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 The masking process makes the output of the softmax operation 0 in the upper right corner. This makes it to where the following occurs:
@@ -314,7 +314,7 @@ In the above sections when referring to Wq, Wk, and Wv, we referred to them as s
 The first step is to multiply x by this weight matrix. This is done through a standard PyTorch linear layer. The resulting matrix will be our query, key, and value matrices concatenated.
 
 <div style="max-width:900px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_24_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_24_image.png" alt="image.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 
@@ -323,7 +323,7 @@ The first step is to multiply x by this weight matrix. This is done through a st
 Using the split operation in PyTorch, we can split out the Q, K, and V matrices back to individual matrices.
 
 <div style="max-width:900px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_24_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_24_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 **Step 3: Reshape the Q, K, V Matrices Into Heads**    
@@ -331,7 +331,7 @@ Using the split operation in PyTorch, we can split out the Q, K, and V matrices 
 Now that we have Q, K, and V Matrices, we can reshape them into heads. This operation should illustrate why in multi-headed self attention, it is required that the embedding dimension be divisible by the number of heads. The image below shows reshaping the Q matrix, but it should also be done for the K and V matrices in the same way.
 
 <div style="max-width:600px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_24_image-3.png" alt="image-3.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_24_image-3.png" alt="image-3.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 **Step 4: QK^T**   
@@ -339,7 +339,7 @@ Now that we have Q, K, and V Matrices, we can reshape them into heads. This oper
 Now we can perform the QK^T operation to get the query/key matches. This operation is the same as shown in self attention above, but now we have multiple heads. In our example we have 3 heads. All this means is that we are doing batch matrix multiplication, with the QK^T operation happening for each head in parallel. This means we have different query/key matches for each head.
 
 <div style="max-width:900px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_24_image-4.png" alt="image-4.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_24_image-4.png" alt="image-4.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 **Step 5: Mask Before Softmax**    
@@ -347,7 +347,7 @@ Now we can perform the QK^T operation to get the query/key matches. This operati
 We take the result and apply the causal mask before softmax operation just like above. The main difference here is that the mask is applied to all 3 heads in parallel.
 
 <div style="max-width:900px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_24_image-5.png" alt="image-5.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_24_image-5.png" alt="image-5.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 **Step 6: Softmax & Multiply by V**   
@@ -355,7 +355,7 @@ We take the result and apply the causal mask before softmax operation just like 
 We can then normalize and multiply by V to get the attended values.
 
 <div style="max-width:800px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_24_image-6.png" alt="image-6.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_24_image-6.png" alt="image-6.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 **Step 7: Merge Heads**
@@ -363,7 +363,7 @@ We can then normalize and multiply by V to get the attended values.
 We now have "V attended" which has 3 heads. We can merge these back together into a single matrix before sending them through a feedforward layer.
 
 <div style="max-width:700px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_24_image-8.png" alt="image-8.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_24_image-8.png" alt="image-8.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 **Step 8: Projection Layer**
@@ -373,7 +373,7 @@ Finally, we feed the attended values through a linear layer, to get the final at
 The final attention output can be thought of as the input tokens, but now cross pollinated with information from their interactions with each other.
 
 <div style="max-width:900px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_24_image-7.png" alt="image-7.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_24_image-7.png" alt="image-7.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 ##### Multi-Headed Causal Self Attention Code
@@ -385,7 +385,7 @@ The following code snippet shows an implementation of multi-headed causal self a
 We have now succesfully implemented multi-headed attention. There are just a few steps left until we have a GPT "block" that we can stack onto the network over and over again. The architecture of a GPT block is as follows:
 
 <div style="max-width:400px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_27_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_27_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 So far we have built the text embedding, positional encoding, and masked multiheaded self attention parts. Now we need to add in the normalization layers and the feedforward layers. These are straightforward pytorch layers that are common across many neural network architectures.
@@ -408,7 +408,7 @@ The transformer makes multiple predictions of this in parallel, one for each tok
 The following diagram shows the full forward pass with shapes as one example moves through the matrix.
 
 <div style="max-width:600px;margin:1.25rem auto;padding:16px;background:#ffffff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-  <img src="images/transformers-explained/cell_31_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
+  <img src="images/transformers-explained-v2/cell_31_image-2.png" alt="image-2.png" style="display:block;width:100%;height:auto;" />
 </div>
 
 ### 1.3.7 Dummy Training Loop
